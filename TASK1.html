@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fieldwork Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16221C;
+    --paper:#F4EFE3;
+    --paper-dim:#EDE6D4;
+    --moss:#4E6357;
+    --gold:#C79A3E;
+    --rust:#B5482E;
+    --teal:#2E6B63;
+    --line: rgba(22,34,28,0.12);
+  }
+
+  [data-theme="dark"]{
+    --ink:#F4EFE3;
+    --paper:#12180F;
+    --paper-dim:#1B231A;
+    --moss:#B7C3B4;
+    --line: rgba(244,239,227,0.14);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; }
+
+  body{
+    font-family:'Inter', sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.6;
+    transition:background 0.4s ease, color 0.4s ease;
+  }
+
+  img{ display:block; max-width:100%; }
+
+  /* ---------- NAV ---------- */
+  .nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:1000;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:26px 5vw;
+    background:transparent;
+    border-bottom:1px solid transparent;
+    transition: background 0.45s ease, border-color 0.45s ease, padding 0.35s ease;
+  }
+
+  .nav.scrolled{
+    background:rgba(244,239,227,0.88);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+    padding:16px 5vw;
+  }
+
+  [data-theme="dark"] .nav.scrolled{ background:rgba(18,24,15,0.85); }
+
+  .nav-mark{
+    font-family:'Fraunces', serif;
+    font-size:20px;
+    font-weight:600;
+    color:var(--paper);
+    text-decoration:none;
+    transition:color 0.45s ease;
+  }
+  .nav.scrolled .nav-mark{ color:var(--ink); }
+  [data-theme="dark"] .nav-mark{ color:var(--ink); }
+
+  .nav-right{ display:flex; align-items:center; gap:18px; }
+
+  .nav-links{
+    display:flex;
+    align-items:center;
+    gap:2px;
+    list-style:none;
+  }
+  .nav-links li{ position:relative; }
+
+  .nav-links a{
+    position:relative;
+    display:inline-block;
+    padding:10px 18px;
+    font-size:14px;
+    font-weight:500;
+    letter-spacing:0.02em;
+    color:var(--paper);
+    text-decoration:none;
+    transition:color 0.35s ease;
+  }
+  .nav.scrolled .nav-links a{ color:var(--ink); }
+  [data-theme="dark"] .nav-links a{ color:var(--ink); }
+
+  .nav-links a::after{
+    content:"";
+    position:absolute;
+    left:18px; right:18px; bottom:6px;
+    height:1.5px;
+    background:var(--gold);
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform 0.3s cubic-bezier(.4,0,.2,1);
+  }
+  .nav-links a:hover{ color:var(--gold); }
+  .nav-links a:hover::after{ transform:scaleX(1); }
+  .nav-links a.active{ color:var(--gold); }
+  .nav-links a.active::after{ transform:scaleX(1); }
+
+  .theme-toggle{
+    width:38px; height:38px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--paper);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px;
+    transition:color 0.4s ease, border-color 0.4s ease, transform 0.25s ease, background 0.3s ease;
+  }
+  .nav.scrolled .theme-toggle{ color:var(--ink); }
+  [data-theme="dark"] .theme-toggle{ color:var(--ink); }
+  .theme-toggle:hover{ transform:rotate(20deg); background:var(--gold); border-color:var(--gold); color:var(--ink); }
+
+  .nav-cta{
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.03em;
+    color:var(--ink);
+    background:var(--gold);
+    padding:10px 20px;
+    border-radius:2px;
+    text-decoration:none;
+    transition:transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .nav-cta:hover{ transform:translateY(-1px); box-shadow:0 6px 14px rgba(0,0,0,0.25); }
+
+  .burger{
+    display:none;
+    width:38px; height:38px;
+    border:none; background:transparent;
+    cursor:pointer;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+  }
+  .burger span{
+    width:22px; height:1.5px;
+    background:var(--paper);
+    transition:background 0.4s ease, transform 0.3s ease, opacity 0.3s ease;
+  }
+  .nav.scrolled .burger span{ background:var(--ink); }
+  [data-theme="dark"] .burger span{ background:var(--ink); }
+  .burger.open span:nth-child(1){ transform:translateY(6.5px) rotate(45deg); }
+  .burger.open span:nth-child(2){ opacity:0; }
+  .burger.open span:nth-child(3){ transform:translateY(-6.5px) rotate(-45deg); }
+
+  .mobile-panel{
+    position:fixed;
+    inset:0;
+    background:var(--ink);
+    z-index:999;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:center;
+    gap:22px;
+    padding:0 10vw;
+    transform:translateY(-100%);
+    transition:transform 0.45s cubic-bezier(.65,0,.35,1);
+  }
+  .mobile-panel.open{ transform:translateY(0); }
+  .mobile-panel a{
+    font-family:'Fraunces', serif;
+    font-size:38px;
+    font-style:italic;
+    color:var(--paper);
+    text-decoration:none;
+  }
+  [data-theme="dark"] .mobile-panel{ background:var(--paper-dim); }
+  [data-theme="dark"] .mobile-panel a{ color:var(--ink); }
+
+  /* ---------- SECTIONS ---------- */
+  section{ padding:140px 8vw 100px; }
+
+  .reveal{ opacity:0; transform:translateY(28px); transition:opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+
+  #home{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--paper);
+    display:grid;
+    grid-template-columns:1.1fr 0.9fr;
+    align-items:center;
+    gap:50px;
+  }
+  [data-theme="dark"] #home{ color:var(--ink); }
+
+  #home h1{
+    font-family:'Fraunces', serif;
+    font-weight:400;
+    font-style:italic;
+    font-size:clamp(38px, 5.2vw, 68px);
+    line-height:1.08;
+  }
+  #home p{
+    margin-top:22px;
+    max-width:44ch;
+    color:rgba(244,239,227,0.7);
+    font-size:16px;
+  }
+  [data-theme="dark"] #home p{ color:rgba(18,24,15,0.65); }
+
+  .home-media{
+    position:relative;
+    border-radius:4px;
+    overflow:hidden;
+    aspect-ratio:4/5;
+  }
+  .home-media img{ width:100%; height:100%; object-fit:cover; transition:transform 0.6s ease; }
+  .home-media:hover img{ transform:scale(1.05); }
+
+  .stat-row{ display:flex; gap:40px; margin-top:44px; }
+  .stat-row div strong{
+    display:block;
+    font-family:'Fraunces', serif;
+    font-size:30px;
+    color:var(--gold);
+  }
+  .stat-row div span{
+    font-size:12px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color:rgba(244,239,227,0.55);
+  }
+  [data-theme="dark"] .stat-row div span{ color:rgba(18,24,15,0.5); }
+
+  section:not(#home) h2{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:clamp(30px, 4.2vw, 48px);
+    margin-bottom:16px;
+  }
+  .eyebrow{
+    display:block;
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:14px;
+    color:var(--gold);
+    margin-bottom:14px;
+  }
+  .lede{ max-width:56ch; color:var(--moss); font-size:16px; margin-bottom:44px; }
+
+  #work{ background:var(--paper); }
+  #studio{ background:var(--paper-dim); }
+  #journal{ background:var(--paper); }
+  #contact{ background:var(--ink); color:var(--paper); }
+  [data-theme="dark"] #contact{ color:var(--ink); }
+  #contact h2{ color:inherit; }
+  #contact p{ color:rgba(244,239,227,0.7); }
+  [data-theme="dark"] #contact p{ color:rgba(18,24,15,0.6); }
+
+  .filters{ display:flex; gap:10px; margin-bottom:34px; flex-wrap:wrap; }
+  .filter-btn{
+    font-family:'Inter', sans-serif;
+    font-size:13px;
+    font-weight:500;
+    padding:8px 16px;
+    border-radius:20px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--moss);
+    cursor:pointer;
+    transition:all 0.25s ease;
+  }
+  .filter-btn:hover{ border-color:var(--gold); color:var(--ink); }
+  .filter-btn.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+
+  .grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:26px; }
+
+  .card{
+    position:relative;
+    border-radius:6px;
+    overflow:hidden;
+    cursor:pointer;
+    aspect-ratio:3/4;
+    transition:transform 0.4s ease;
+  }
+  .card:hover{ transform:translateY(-6px); }
+  .card img{ width:100%; height:100%; object-fit:cover; transition:transform 0.5s ease, filter 0.4s ease; }
+  .card:hover img{ transform:scale(1.08); }
+
+  .card-overlay{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; justify-content:flex-end;
+    padding:20px;
+    background:linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.05) 55%, transparent 100%);
+    opacity:0.85;
+    transition:opacity 0.35s ease;
+  }
+  .card:hover .card-overlay{ opacity:1; }
+
+  .card-tag{
+    align-self:flex-start;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    padding:4px 10px;
+    border-radius:20px;
+    margin-bottom:10px;
+    color:var(--ink);
+  }
+  .tag-brand{ background:var(--gold); }
+  .tag-culture{ background:var(--rust); color:#fff; }
+  .tag-landscape{ background:var(--teal); color:#fff; }
+
+  .card h3{ font-family:'Fraunces', serif; font-weight:500; font-size:20px; color:#fff; }
+  .card p{ font-size:13px; color:rgba(255,255,255,0.75); margin-top:4px; }
+  .card.hidden{ display:none; }
+
+  .studio-grid{ display:grid; grid-template-columns:0.9fr 1.1fr; gap:50px; align-items:center; }
+  .studio-media{ border-radius:4px; overflow:hidden; }
+  .studio-media img{ width:100%; }
+
+  .team-strip{ display:flex; gap:14px; margin-top:30px; }
+  .team-strip img{
+    width:54px; height:54px; border-radius:50%;
+    object-fit:cover;
+    border:2px solid var(--paper-dim);
+    transition:transform 0.25s ease;
+  }
+  .team-strip img:hover{ transform:translateY(-4px); }
+
+  .journal-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:26px; }
+  .journal-card img{ border-radius:4px; aspect-ratio:16/10; object-fit:cover; margin-bottom:16px; }
+  .journal-card .eyebrow{ margin-bottom:8px; }
+  .journal-card h3{ font-family:'Fraunces', serif; font-weight:500; font-size:19px; margin-bottom:8px; }
+  .journal-card p{ font-size:14px; color:var(--moss); }
+  .journal-card{ cursor:pointer; }
+  .journal-card:hover img{ filter:saturate(1.3); }
+
+  .contact-row{ display:flex; gap:60px; flex-wrap:wrap; margin-top:36px; }
+  .contact-form{ display:flex; flex-direction:column; gap:14px; max-width:380px; flex:1; min-width:260px; }
+  .contact-form input, .contact-form textarea{
+    background:transparent;
+    border:none;
+    border-bottom:1px solid rgba(244,239,227,0.3);
+    color:var(--paper);
+    font-family:'Inter', sans-serif;
+    font-size:15px;
+    padding:10px 0;
+    outline:none;
+    transition:border-color 0.3s ease;
+  }
+  [data-theme="dark"] .contact-form input, [data-theme="dark"] .contact-form textarea{ color:var(--ink); border-bottom-color:rgba(18,24,15,0.3); }
+  .contact-form input:focus, .contact-form textarea:focus{ border-bottom-color:var(--gold); }
+  .contact-form button{
+    align-self:flex-start;
+    margin-top:10px;
+    background:var(--gold);
+    color:var(--ink);
+    border:none;
+    padding:12px 24px;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.03em;
+    border-radius:2px;
+    cursor:pointer;
+    transition:transform 0.25s ease;
+  }
+  .contact-form button:hover{ transform:translateY(-2px); }
+
+  .contact-info{ flex:1; min-width:220px; }
+  .contact-info div{ margin-bottom:20px; }
+  .contact-info span{ display:block; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:var(--gold); margin-bottom:4px; }
+
+  @media (max-width:900px){
+    #home{ grid-template-columns:1fr; }
+    .grid, .journal-grid{ grid-template-columns:repeat(2,1fr); }
+    .studio-grid{ grid-template-columns:1fr; }
+  }
+  @media (max-width:760px){
+    .nav-links{ display:none; }
+    .burger{ display:flex; }
+    .grid, .journal-grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav" id="siteNav">
+  <a href="#home" class="nav-mark">Fieldwork Studio</a>
+  <div class="nav-right">
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home" data-section="home">Home</a></li>
+      <li><a href="#work" data-section="work">Work</a></li>
+      <li><a href="#studio" data-section="studio">Studio</a></li>
+      <li><a href="#journal" data-section="journal">Journal</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">◐</button>
+    <a href="#contact" class="nav-cta">Get in touch</a>
+    <button class="burger" id="burger" aria-label="Open menu"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<div class="mobile-panel" id="mobilePanel">
+  <a href="#home" data-section="home">Home</a>
+  <a href="#work" data-section="work">Work</a>
+  <a href="#studio" data-section="studio">Studio</a>
+  <a href="#journal" data-section="journal">Journal</a>
+  <a href="#contact" data-section="contact">Contact</a>
+</div>
+
+<section id="home">
+  <div>
+    <h1>We design places people remember.</h1>
+    <p>An architecture and brand studio working across landscape, culture, and identity. Scroll to watch the navigation shift from transparent to solid — hover any link, or flip the theme toggle.</p>
+    <div class="stat-row">
+      <div><strong>12</strong><span>Years running</span></div>
+      <div><strong>46</strong><span>Projects built</span></div>
+      <div><strong>9</strong><span>Countries</span></div>
+    </div>
+  </div>
+  <div class="home-media">
+    <img src="https://picsum.photos/seed/fieldwork-hero/900/1100" alt="Studio hero photograph">
+  </div>
+</section>
+
+<section id="work">
+  <span class="eyebrow">Selected work</span>
+  <h2>Twelve buildings, one point of view</h2>
+  <p class="lede">Filter by discipline to see how the same eye moves between a retail identity, a public plaza, and a house on a hillside.</p>
+
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="brand">Brand</button>
+    <button class="filter-btn" data-filter="culture">Culture</button>
+    <button class="filter-btn" data-filter="landscape">Landscape</button>
+  </div>
+
+  <div class="grid" id="workGrid">
+    <div class="card reveal" data-cat="landscape">
+      <img src="https://picsum.photos/seed/fw-1/600/800" alt="Hillside residence">
+      <div class="card-overlay">
+        <span class="card-tag tag-landscape">Landscape</span>
+        <h3>Hillside Residence</h3>
+        <p>Sonoma County, 2023</p>
+      </div>
+    </div>
+    <div class="card reveal" data-cat="brand">
+      <img src="https://picsum.photos/seed/fw-2/600/800" alt="Retail identity project">
+      <div class="card-overlay">
+        <span class="card-tag tag-brand">Brand</span>
+        <h3>Almond &amp; Salt</h3>
+        <p>Retail identity, 2022</p>
+      </div>
+    </div>
+    <div class="card reveal" data-cat="culture">
+      <img src="https://picsum.photos/seed/fw-3/600/800" alt="Public plaza project">
+      <div class="card-overlay">
+        <span class="card-tag tag-culture">Culture</span>
+        <h3>Founders Plaza</h3>
+        <p>Civic commission, 2021</p>
+      </div>
+    </div>
+    <div class="card reveal" data-cat="landscape">
+      <img src="https://picsum.photos/seed/fw-4/600/800" alt="Coastal pavilion">
+      <div class="card-overlay">
+        <span class="card-tag tag-landscape">Landscape</span>
+        <h3>Coastal Pavilion</h3>
+        <p>Big Sur, 2023</p>
+      </div>
+    </div>
+    <div class="card reveal" data-cat="culture">
+      <img src="https://picsum.photos/seed/fw-5/600/800" alt="Museum wing">
+      <div class="card-overlay">
+        <span class="card-tag tag-culture">Culture</span>
+        <h3>North Wing Museum</h3>
+        <p>Extension, 2020</p>
+      </div>
+    </div>
+    <div class="card reveal" data-cat="brand">
+      <img src="https://picsum.photos/seed/fw-6/600/800" alt="Hotel branding">
+      <div class="card-overlay">
+        <span class="card-tag tag-brand">Brand</span>
+        <h3>Hotel Marina</h3>
+        <p>Identity and signage, 2024</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="studio">
+  <div class="studio-grid">
+    <div class="studio-media reveal">
+      <img src="https://picsum.photos/seed/fieldwork-studio/700/850" alt="Studio interior">
+    </div>
+    <div class="reveal">
+      <span class="eyebrow">About</span>
+      <h2>A small studio, deliberately</h2>
+      <p class="lede">Twelve people, one studio, based on the coast. We take on a handful of projects a year so every one gets full attention from the first sketch to the final walkthrough.</p>
+      <div class="team-strip">
+        <img src="https://picsum.photos/seed/team-1/100/100" alt="Team member">
+        <img src="https://picsum.photos/seed/team-2/100/100" alt="Team member">
+        <img src="https://picsum.photos/seed/team-3/100/100" alt="Team member">
+        <img src="https://picsum.photos/seed/team-4/100/100" alt="Team member">
+        <img src="https://picsum.photos/seed/team-5/100/100" alt="Team member">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="journal">
+  <span class="eyebrow">Writing</span>
+  <h2>Notes from the studio floor</h2>
+  <p class="lede">Longer thoughts on materials, process, and the buildings that shaped how we think.</p>
+  <div class="journal-grid">
+    <div class="journal-card reveal">
+      <img src="https://picsum.photos/seed/journal-1/500/320" alt="Article thumbnail">
+      <span class="eyebrow">Materials</span>
+      <h3>Why we keep returning to raw pine</h3>
+      <p>On the honesty of unfinished wood, and what it teaches a room over time.</p>
+    </div>
+    <div class="journal-card reveal">
+      <img src="https://picsum.photos/seed/journal-2/500/320" alt="Article thumbnail">
+      <span class="eyebrow">Process</span>
+      <h3>The first model is always wrong</h3>
+      <p>A short case for building fast and throwing the first draft away.</p>
+    </div>
+    <div class="journal-card reveal">
+      <img src="https://picsum.photos/seed/journal-3/500/320" alt="Article thumbnail">
+      <span class="eyebrow">Field notes</span>
+      <h3>Three days on the Big Sur site</h3>
+      <p>What the coastal wind told us before we poured a single foundation.</p>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <span class="eyebrow">Say hello</span>
+  <h2>Let's start something</h2>
+  <div class="contact-row">
+    <div class="contact-form">
+      <input type="text" placeholder="Your name">
+      <input type="email" placeholder="Email address">
+      <textarea rows="3" placeholder="Tell us about the project"></textarea>
+      <button type="button">Send message</button>
+    </div>
+    <div class="contact-info">
+      <div><span>Email</span>hello@fieldworkstudio.com</div>
+      <div><span>Studio</span>318 Harbor Row, Half Moon Bay, CA</div>
+      <div><span>Phone</span>+1 (415) 555-0148</div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const nav = document.getElementById('siteNav');
+  const links = document.querySelectorAll('.nav-links a, .mobile-panel a');
+  const sections = document.querySelectorAll('section[id]');
+  const themeToggle = document.getElementById('themeToggle');
+  const burger = document.getElementById('burger');
+  const mobilePanel = document.getElementById('mobilePanel');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const cards = document.querySelectorAll('#workGrid .card');
+
+  function onScroll(){
+    nav.classList.toggle('scrolled', window.scrollY > 80);
+  }
+  window.addEventListener('scroll', onScroll, { passive:true });
+  onScroll();
+
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        const id = entry.target.getAttribute('id');
+        links.forEach(link => link.classList.toggle('active', link.dataset.section === id));
+      }
+    });
+  }, { rootMargin: '-45% 0px -45% 0px' });
+  sections.forEach(sec => sectionObserver.observe(sec));
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        entry.target.classList.add('in');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold:0.15 });
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    themeToggle.textContent = isDark ? '◐' : '◑';
+  });
+
+  burger.addEventListener('click', () => {
+    burger.classList.toggle('open');
+    mobilePanel.classList.toggle('open');
+  });
+  mobilePanel.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      burger.classList.remove('open');
+      mobilePanel.classList.remove('open');
+    });
+  });
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.dataset.filter;
+      cards.forEach(card => {
+        const match = filter === 'all' || card.dataset.cat === filter;
+        card.classList.toggle('hidden', !match);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
